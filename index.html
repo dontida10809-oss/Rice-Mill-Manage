@@ -1,11 +1,939 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>ระบบจัดการคลังสินค้าโรงสีข้าว</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .nav {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            overflow-x: auto;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .nav-btn:hover {
+            background: #e9ecef;
+        }
+
+        .nav-btn.active {
+            background: white;
+            border-bottom: 3px solid #667eea;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
 </head>
 <body>
-    
+    <div class="container">
+        <div class="header">
+            <h1>🌾 ระบบจัดการคลังสินค้าโรงสีข้าว</h1>
+            <p>Rice Mill Inventory Management System</p>
+        </div>
+
+        <div class="nav">
+            <button class="nav-btn active" onclick="showSection('dashboard')">📊 Dashboard</button>
+            <button class="nav-btn" onclick="showSection('rice-types')">🌾 ประเภทข้าว</button>
+            <button class="nav-btn" onclick="showSection('receive')">📝 รับข้าวเปลือก</button>
+            <button class="nav-btn" onclick="showSection('sales')">💰 บันทึกการขาย</button>
+            <button class="nav-btn" onclick="showSection('stock')">📦 สต็อกคงเหลือ</button>
+            <button class="nav-btn" onclick="showSection('reports')">📈 รายงาน</button>
+        </div>
+
+        <div class="content">
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="section active">
+                <h2 style="margin-bottom: 20px;">ภาพรวมธุรกิจ</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>ประเภทข้าวทั้งหมด</h3>
+                        <div class="value" id="total-rice-types">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>รับข้าวเปลือกวันนี้</h3>
+                        <div class="value" id="today-received">0 กก.</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>ยอดขายวันนี้</h3>
+                        <div class="value" id="today-sales">0 ฿</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>สต็อกรวม</h3>
+                        <div class="value" id="total-stock">0 กก.</div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>ยินดีต้อนรับ!</strong> เริ่มต้นโดยการเพิ่มประเภทข้าวในเมนู "ประเภทข้าว"
+                </div>
+            </div>
+
+            <!-- Rice Types Section -->
+            <div id="rice-types" class="section">
+                <h2 style="margin-bottom: 20px;">จัดการประเภทข้าว</h2>
+                
+                <div class="grid-2">
+                    <div>
+                        <h3>เพิ่มประเภทข้าวใหม่</h3>
+                        <form id="rice-type-form" onsubmit="addRiceType(event)">
+                            <div class="form-group">
+                                <label>ชื่อประเภทข้าว *</label>
+                                <input type="text" id="rice-name" required placeholder="เช่น ข้าวหอมมะลิ">
+                            </div>
+                            <div class="form-group">
+                                <label>อัตราแบ่งของโรงสี (%) *</label>
+                                <input type="number" id="rice-rate" required min="0" max="100" step="0.1" placeholder="เช่น 10">
+                            </div>
+                            <div class="form-group">
+                                <label>ราคาข้าวสาร (บาท/กก.) *</label>
+                                <input type="number" id="rice-price" required min="0" step="0.01" placeholder="เช่น 35">
+                            </div>
+                            <div class="form-group">
+                                <label>คำอธิบาย</label>
+                                <textarea id="rice-desc" rows="3" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">เพิ่มประเภทข้าว</button>
+                        </form>
+                    </div>
+
+                    <div>
+                        <h3>รายการประเภทข้าว</h3>
+                        <div id="rice-types-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Receive Section -->
+            <div id="receive" class="section">
+                <h2 style="margin-bottom: 20px;">บันทึกรับข้าวเปลือก</h2>
+                
+                <form id="receive-form" onsubmit="addReceive(event)">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>ชื่อเกษตรกร *</label>
+                            <input type="text" id="farmer-name" required placeholder="ชื่อ-นามสกุล">
+                        </div>
+                        <div class="form-group">
+                            <label>วันที่รับ *</label>
+                            <input type="date" id="receive-date" required>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>ประเภทข้าว *</label>
+                            <select id="receive-rice-type" required onchange="updateCalculation()">
+                                <option value="">-- เลือกประเภทข้าว --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>น้ำหนักข้าวเปลือก (กก.) *</label>
+                            <input type="number" id="receive-weight" required min="0" step="0.1" placeholder="0.00" onchange="updateCalculation()">
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success" id="calculation-result" style="display:none;">
+                        <strong>ผลการคำนวณ:</strong><br>
+                        <div id="calc-details"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">บันทึกการรับข้าว</button>
+                </form>
+
+                <div class="table-container">
+                    <h3 style="margin-top: 30px;">ประวัติการรับข้าวเปลือก</h3>
+                    <div id="receive-history"></div>
+                </div>
+            </div>
+
+            <!-- Sales Section -->
+            <div id="sales" class="section">
+                <h2 style="margin-bottom: 20px;">บันทึกการขาย</h2>
+                
+                <form id="sales-form" onsubmit="addSale(event)">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>วันที่ขาย *</label>
+                            <input type="date" id="sale-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>ประเภทสินค้า *</label>
+                            <select id="sale-product" required>
+                                <option value="">-- เลือกสินค้า --</option>
+                                <option value="rice">ข้าวสาร</option>
+                                <option value="broken">ปลายข้าว</option>
+                                <option value="bran">รำข้าว</option>
+                                <option value="husk">แกลบ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>จำนวน (กก.) *</label>
+                            <input type="number" id="sale-quantity" required min="0" step="0.1" placeholder="0.00" onchange="calculateSaleTotal()">
+                        </div>
+                        <div class="form-group">
+                            <label>ราคา (บาท/กก.) *</label>
+                            <input type="number" id="sale-price" required min="0" step="0.01" placeholder="0.00" onchange="calculateSaleTotal()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>ราคารวม (บาท)</label>
+                        <input type="number" id="sale-total" readonly style="background: #f8f9fa; font-weight: bold; font-size: 18px;">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">บันทึกการขาย</button>
+                </form>
+
+                <div class="table-container">
+                    <h3 style="margin-top: 30px;">ประวัติการขาย</h3>
+                    <div id="sales-history"></div>
+                </div>
+            </div>
+
+            <!-- Stock Section -->
+            <div id="stock" class="section">
+                <h2 style="margin-bottom: 20px;">สต็อกคงเหลือ</h2>
+                <div id="stock-list"></div>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reports" class="section">
+                <h2 style="margin-bottom: 20px;">รายงานสรุป</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>รับข้าวเปลือกทั้งหมด</h3>
+                        <div class="value" id="report-total-received">0 กก.</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>ยอดขายรวม</h3>
+                        <div class="value" id="report-total-sales">0 ฿</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>ข้าวสารคงเหลือ</h3>
+                        <div class="value" id="report-rice-stock">0 กก.</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>ผลพลอยได้คงเหลือ</h3>
+                        <div class="value" id="report-byproduct-stock">0 กก.</div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <h3>รายงานแยกตามประเภทข้าว</h3>
+                    <div id="report-by-type"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data storage using variables
+        let riceTypes = [];
+        let receives = [];
+        let sales = [];
+        let stock = {
+            rice: {},
+            broken: 0,
+            bran: 0,
+            husk: 0
+        };
+
+        // Initialize
+        function init() {
+            loadData();
+            updateDashboard();
+            updateRiceTypesList();
+            updateReceiveHistory();
+            updateSalesHistory();
+            updateStockList();
+            updateReports();
+            setDefaultDates();
+        }
+
+        function setDefaultDates() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('receive-date').value = today;
+            document.getElementById('sale-date').value = today;
+        }
+
+        function loadData() {
+            // Load from memory (reset on page reload)
+            riceTypes = [];
+            receives = [];
+            sales = [];
+            stock = {
+                rice: {},
+                broken: 0,
+                bran: 0,
+                husk: 0
+            };
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Rice Types Management
+        function addRiceType(e) {
+            e.preventDefault();
+            
+            const riceType = {
+                id: Date.now(),
+                name: document.getElementById('rice-name').value,
+                rate: parseFloat(document.getElementById('rice-rate').value),
+                price: parseFloat(document.getElementById('rice-price').value),
+                description: document.getElementById('rice-desc').value
+            };
+
+            riceTypes.push(riceType);
+            stock.rice[riceType.id] = 0;
+            
+            document.getElementById('rice-type-form').reset();
+            updateRiceTypesList();
+            updateReceiveOptions();
+            updateDashboard();
+            alert('เพิ่มประเภทข้าวสำเร็จ!');
+        }
+
+        function updateRiceTypesList() {
+            const list = document.getElementById('rice-types-list');
+            
+            if (riceTypes.length === 0) {
+                list.innerHTML = '<div class="empty-state">ยังไม่มีประเภทข้าว<br>กรุณาเพิ่มประเภทข้าวใหม่</div>';
+                return;
+            }
+
+            list.innerHTML = riceTypes.map(rt => `
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px;">
+                    <strong>${rt.name}</strong><br>
+                    อัตราแบ่ง: ${rt.rate}% | ราคา: ${rt.price} บาท/กก.<br>
+                    ${rt.description ? `<small>${rt.description}</small>` : ''}
+                    <button onclick="deleteRiceType(${rt.id})" class="btn btn-danger" style="margin-top: 10px; padding: 5px 15px; font-size: 14px;">ลบ</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteRiceType(id) {
+            if (confirm('ต้องการลบประเภทข้าวนี้?')) {
+                riceTypes = riceTypes.filter(rt => rt.id !== id);
+                delete stock.rice[id];
+                updateRiceTypesList();
+                updateReceiveOptions();
+                updateDashboard();
+            }
+        }
+
+        function updateReceiveOptions() {
+            const select = document.getElementById('receive-rice-type');
+            select.innerHTML = '<option value="">-- เลือกประเภทข้าว --</option>' +
+                riceTypes.map(rt => `<option value="${rt.id}">${rt.name}</option>`).join('');
+        }
+
+        // Receive Management
+        function updateCalculation() {
+            const typeId = document.getElementById('receive-rice-type').value;
+            const weight = parseFloat(document.getElementById('receive-weight').value) || 0;
+            
+            if (!typeId || !weight) {
+                document.getElementById('calculation-result').style.display = 'none';
+                return;
+            }
+
+            const riceType = riceTypes.find(rt => rt.id == typeId);
+            const millShare = weight * (riceType.rate / 100);
+            const farmerShare = weight - millShare;
+            
+            // Calculation: 100kg paddy -> 60kg white rice, 10kg broken, 20kg bran, 10kg husk
+            const whiteRice = millShare * 0.6;
+            const broken = millShare * 0.1;
+            const bran = millShare * 0.2;
+            const husk = millShare * 0.1;
+
+            document.getElementById('calculation-result').style.display = 'block';
+            document.getElementById('calc-details').innerHTML = `
+                ข้าวเปลือกทั้งหมด: <strong>${weight.toFixed(2)}</strong> กก.<br>
+                ส่วนของโรงสี (${riceType.rate}%): <strong>${millShare.toFixed(2)}</strong> กก.<br>
+                ส่วนของเกษตรกร: <strong>${farmerShare.toFixed(2)}</strong> กก.<br>
+                <br>
+                <strong>ผลผลิตจากส่วนของโรงสี:</strong><br>
+                - ข้าวสาร: <strong>${whiteRice.toFixed(2)}</strong> กก.<br>
+                - ปลายข้าว: <strong>${broken.toFixed(2)}</strong> กก.<br>
+                - รำข้าว: <strong>${bran.toFixed(2)}</strong> กก.<br>
+                - แกลบ: <strong>${husk.toFixed(2)}</strong> กก.
+            `;
+        }
+
+        function addReceive(e) {
+            e.preventDefault();
+            
+            const typeId = parseInt(document.getElementById('receive-rice-type').value);
+            const weight = parseFloat(document.getElementById('receive-weight').value);
+            const riceType = riceTypes.find(rt => rt.id === typeId);
+            
+            const millShare = weight * (riceType.rate / 100);
+            const whiteRice = millShare * 0.6;
+            const broken = millShare * 0.1;
+            const bran = millShare * 0.2;
+            const husk = millShare * 0.1;
+
+            const receive = {
+                id: Date.now(),
+                date: document.getElementById('receive-date').value,
+                farmer: document.getElementById('farmer-name').value,
+                riceTypeId: typeId,
+                riceTypeName: riceType.name,
+                weight: weight,
+                millShare: millShare,
+                whiteRice: whiteRice,
+                broken: broken,
+                bran: bran,
+                husk: husk
+            };
+
+            receives.push(receive);
+            
+            // Update stock
+            stock.rice[typeId] = (stock.rice[typeId] || 0) + whiteRice;
+            stock.broken += broken;
+            stock.bran += bran;
+            stock.husk += husk;
+
+            document.getElementById('receive-form').reset();
+            document.getElementById('calculation-result').style.display = 'none';
+            setDefaultDates();
+            
+            updateReceiveHistory();
+            updateStockList();
+            updateDashboard();
+            updateReports();
+            
+            alert('บันทึกการรับข้าวเปลือกสำเร็จ!');
+        }
+
+        function updateReceiveHistory() {
+            const container = document.getElementById('receive-history');
+            
+            if (receives.length === 0) {
+                container.innerHTML = '<div class="empty-state">ยังไม่มีประวัติการรับข้าว</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>วันที่</th>
+                            <th>เกษตรกร</th>
+                            <th>ประเภทข้าว</th>
+                            <th>น้ำหนัก (กก.)</th>
+                            <th>ส่วนโรงสี (กก.)</th>
+                            <th>ข้าวสาร (กก.)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${receives.slice().reverse().map(r => `
+                            <tr>
+                                <td>${new Date(r.date).toLocaleDateString('th-TH')}</td>
+                                <td>${r.farmer}</td>
+                                <td>${r.riceTypeName}</td>
+                                <td>${r.weight.toFixed(2)}</td>
+                                <td>${r.millShare.toFixed(2)}</td>
+                                <td>${r.whiteRice.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Sales Management
+        function calculateSaleTotal() {
+            const qty = parseFloat(document.getElementById('sale-quantity').value) || 0;
+            const price = parseFloat(document.getElementById('sale-price').value) || 0;
+            document.getElementById('sale-total').value = (qty * price).toFixed(2);
+        }
+
+        function addSale(e) {
+            e.preventDefault();
+            
+            const product = document.getElementById('sale-product').value;
+            const qty = parseFloat(document.getElementById('sale-quantity').value);
+            
+            // Check stock
+            let currentStock = 0;
+            if (product === 'rice') {
+                currentStock = Object.values(stock.rice).reduce((a, b) => a + b, 0);
+            } else {
+                currentStock = stock[product];
+            }
+
+            if (qty > currentStock) {
+                alert('สต็อกไม่เพียงพอ! สต็อกคงเหลือ: ' + currentStock.toFixed(2) + ' กก.');
+                return;
+            }
+
+            const sale = {
+                id: Date.now(),
+                date: document.getElementById('sale-date').value,
+                product: product,
+                productName: document.getElementById('sale-product').selectedOptions[0].text,
+                quantity: qty,
+                price: parseFloat(document.getElementById('sale-price').value),
+                total: parseFloat(document.getElementById('sale-total').value)
+            };
+
+            sales.push(sale);
+            
+            // Update stock
+            if (product === 'rice') {
+                // Deduct from first available rice type
+                let remaining = qty;
+                for (let typeId in stock.rice) {
+                    if (remaining <= 0) break;
+                    if (stock.rice[typeId] > 0) {
+                        const deduct = Math.min(stock.rice[typeId], remaining);
+                        stock.rice[typeId] -= deduct;
+                        remaining -= deduct;
+                    }
+                }
+            } else {
+                stock[product] -= qty;
+            }
+
+            document.getElementById('sales-form').reset();
+            setDefaultDates();
+            
+            updateSalesHistory();
+            updateStockList();
+            updateDashboard();
+            updateReports();
+            
+            alert('บันทึกการขายสำเร็จ!');
+        }
+
+        function updateSalesHistory() {
+            const container = document.getElementById('sales-history');
+            
+            if (sales.length === 0) {
+                container.innerHTML = '<div class="empty-state">ยังไม่มีประวัติการขาย</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>วันที่</th>
+                            <th>สินค้า</th>
+                            <th>จำนวน (กก.)</th>
+                            <th>ราคา/กก.</th>
+                            <th>ยอดรวม (฿)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sales.slice().reverse().map(s => `
+                            <tr>
+                                <td>${new Date(s.date).toLocaleDateString('th-TH')}</td>
+                                <td>${s.productName}</td>
+                                <td>${s.quantity.toFixed(2)}</td>
+                                <td>${s.price.toFixed(2)}</td>
+                                <td><strong>${s.total.toFixed(2)}</strong></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Stock Management
+        function updateStockList() {
+            const container = document.getElementById('stock-list');
+            
+            const stockItems = [];
+            
+            // Rice stock by type
+            riceTypes.forEach(rt => {
+                const qty = stock.rice[rt.id] || 0;
+                stockItems.push({
+                    name: `ข้าวสาร - ${rt.name}`,
+                    quantity: qty,
+                    unit: 'กก.',
+                    status: qty > 50 ? 'success' : qty > 20 ? 'warning' : 'danger'
+                });
+            });
+            
+            // By-products
+            stockItems.push(
+                {
+                    name: 'ปลายข้าว',
+                    quantity: stock.broken,
+                    unit: 'กก.',
+                    status: stock.broken > 50 ? 'success' : stock.broken > 20 ? 'warning' : 'danger'
+                },
+                {
+                    name: 'รำข้าว',
+                    quantity: stock.bran,
+                    unit: 'กก.',
+                    status: stock.bran > 50 ? 'success' : stock.bran > 20 ? 'warning' : 'danger'
+                },
+                {
+                    name: 'แกลบ',
+                    quantity: stock.husk,
+                    unit: 'กก.',
+                    status: stock.husk > 50 ? 'success' : stock.husk > 20 ? 'warning' : 'danger'
+                }
+            );
+
+            if (stockItems.every(item => item.quantity === 0)) {
+                container.innerHTML = '<div class="empty-state">ยังไม่มีสต็อกสินค้า<br>เริ่มต้นโดยการบันทึกรับข้าวเปลือก</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>สินค้า</th>
+                            <th>จำนวน</th>
+                            <th>หน่วย</th>
+                            <th>สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${stockItems.map(item => `
+                            <tr>
+                                <td><strong>${item.name}</strong></td>
+                                <td>${item.quantity.toFixed(2)}</td>
+                                <td>${item.unit}</td>
+                                <td>
+                                    <span class="badge badge-${item.status}">
+                                        ${item.status === 'success' ? 'ปกติ' : item.status === 'warning' ? 'ใกล้หมด' : 'น้อย'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Dashboard
+        function updateDashboard() {
+            document.getElementById('total-rice-types').textContent = riceTypes.length;
+            
+            const today = new Date().toISOString().split('T')[0];
+            const todayReceived = receives.filter(r => r.date === today).reduce((sum, r) => sum + r.weight, 0);
+            document.getElementById('today-received').textContent = todayReceived.toFixed(2) + ' กก.';
+            
+            const todaySales = sales.filter(s => s.date === today).reduce((sum, s) => sum + s.total, 0);
+            document.getElementById('today-sales').textContent = todaySales.toFixed(2) + ' ฿';
+            
+            const totalStock = Object.values(stock.rice).reduce((a, b) => a + b, 0) + stock.broken + stock.bran + stock.husk;
+            document.getElementById('total-stock').textContent = totalStock.toFixed(2) + ' กก.';
+        }
+
+        // Reports
+        function updateReports() {
+            const totalReceived = receives.reduce((sum, r) => sum + r.weight, 0);
+            document.getElementById('report-total-received').textContent = totalReceived.toFixed(2) + ' กก.';
+            
+            const totalSales = sales.reduce((sum, s) => sum + s.total, 0);
+            document.getElementById('report-total-sales').textContent = totalSales.toFixed(2) + ' ฿';
+            
+            const riceStock = Object.values(stock.rice).reduce((a, b) => a + b, 0);
+            document.getElementById('report-rice-stock').textContent = riceStock.toFixed(2) + ' กก.';
+            
+            const byproductStock = stock.broken + stock.bran + stock.husk;
+            document.getElementById('report-byproduct-stock').textContent = byproductStock.toFixed(2) + ' กก.';
+            
+            // Report by type
+            const container = document.getElementById('report-by-type');
+            
+            if (riceTypes.length === 0) {
+                container.innerHTML = '<div class="empty-state">ยังไม่มีข้อมูลรายงาน</div>';
+                return;
+            }
+
+            const reportData = riceTypes.map(rt => {
+                const typeReceives = receives.filter(r => r.riceTypeId === rt.id);
+                const totalWeight = typeReceives.reduce((sum, r) => sum + r.weight, 0);
+                const totalWhiteRice = typeReceives.reduce((sum, r) => sum + r.whiteRice, 0);
+                const currentStock = stock.rice[rt.id] || 0;
+                
+                return {
+                    name: rt.name,
+                    received: totalWeight,
+                    produced: totalWhiteRice,
+                    stock: currentStock
+                };
+            });
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ประเภทข้าว</th>
+                            <th>รับข้าวเปลือก (กก.)</th>
+                            <th>ข้าวสารที่ผลิตได้ (กก.)</th>
+                            <th>สต็อกคงเหลือ (กก.)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${reportData.map(item => `
+                            <tr>
+                                <td><strong>${item.name}</strong></td>
+                                <td>${item.received.toFixed(2)}</td>
+                                <td>${item.produced.toFixed(2)}</td>
+                                <td>${item.stock.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Initialize on load
+        init();
+    </script>
 </body>
 </html>
