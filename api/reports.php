@@ -2,13 +2,13 @@
 require 'config.php';
 
 $stmt = $pdo->query("
-    SELECT
-        SUM(bran_kg) AS total_bran,
-        SUM(broken_rice_kg) AS total_broken,
-        SUM(husk_bags) AS total_husk,
-        SUM(total) AS grand_total
+    SELECT 
+        product,
+        SUM(quantity) AS total_quantity,
+        SUM(total) AS total_sales
     FROM sales
+    GROUP BY product
 ");
 
-echo json_encode($stmt->fetch());
+echo json_encode($stmt->fetchAll());
 ?>

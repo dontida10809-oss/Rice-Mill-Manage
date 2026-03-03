@@ -504,18 +504,10 @@
 
         // Initialize
         function init() {
-            loadData();
-            updateDashboard();
-            updateRiceTypesList();
-            updateReceiveOptions();
-            updateReceiveHistory();
-            updateSalesHistory();
-            updateStockList();
-            updateReports();
-            setDefaultDates();
-            
-        }
-
+    loadRiceTypes();
+    loadReceives();
+    loadSales();
+}
         
 
         function setDefaultDates() {
@@ -524,24 +516,9 @@
             document.getElementById('sale-date').value = today;
         }
 
-       function loadData() {
-    riceTypes = JSON.parse(localStorage.getItem('riceTypes')) || [];
-    receives = JSON.parse(localStorage.getItem('receives')) || [];
-    sales = JSON.parse(localStorage.getItem('sales')) || [];
-    stock = JSON.parse(localStorage.getItem('stock')) || {
-        rice: {},
-        broken: 0,
-        bran: 0,
-        husk: 0
-    };
-}
+       
 
-function saveData() {
-    localStorage.setItem('riceTypes', JSON.stringify(riceTypes));
-    localStorage.setItem('receives', JSON.stringify(receives));
-    localStorage.setItem('sales', JSON.stringify(sales));
-    localStorage.setItem('stock', JSON.stringify(stock));
-}
+
 
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -553,26 +530,33 @@ function saveData() {
 
         // Rice Types Management
         function addRiceType(e) {
-            e.preventDefault();
-            
-            const riceType = {
-                id: Date.now(),
-                name: document.getElementById('rice-name').value,
-                rate: parseFloat(document.getElementById('rice-rate').value),
-                price: parseFloat(document.getElementById('rice-price').value),
-                description: document.getElementById('rice-desc').value
-            };
+    e.preventDefault();
 
-            riceTypes.push(riceType);
-            stock.rice[riceType.id] = 0;
-            
-            document.getElementById('rice-type-form').reset();
+    const name = document.getElementById('rice-name').value;
+
+    fetch('rice_types.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+        loadRiceTypes();
+        document.getElementById('rice-type-form').reset();
+    });
+}
+
+function loadRiceTypes() {
+    fetch('rice_types.php')
+        .then(res => res.json())
+        .then(data => {
+            riceTypes = data;
             updateRiceTypesList();
             updateReceiveOptions();
             updateDashboard();
-            saveData();
-            alert('เพิ่มประเภทข้าวสำเร็จ!');
-        }
+        });
+}
 
         function updateRiceTypesList() {
             const list = document.getElementById('rice-types-list');
@@ -599,7 +583,7 @@ function saveData() {
                 updateRiceTypesList();
                 updateReceiveOptions();
                 updateDashboard();
-                saveData();
+                
             }
         }
 
@@ -613,47 +597,38 @@ function saveData() {
 
        function addReceive(e) {
     e.preventDefault();
-    
-    const typeId = parseInt(document.getElementById('receive-rice-type').value);
-    const weight = parseFloat(document.getElementById('receive-weight').value);
-    const riceType = riceTypes.find(rt => rt.id === typeId);
 
-    const whiteRice = parseFloat(document.getElementById('white-rice').value);
-    const broken = parseFloat(document.getElementById('broken-rice').value);
-    const bran = parseFloat(document.getElementById('bran-rice').value);
-    const huskBags = parseFloat(document.getElementById('husk-bags').value);
-
-    const receive = {
-        id: Date.now(),
-        date: document.getElementById('receive-date').value,
+    const data = {
+        rice_type_id: document.getElementById('receive-rice-type').value,
         farmer: document.getElementById('farmer-name').value,
-        riceTypeId: typeId,
-        riceTypeName: riceType.name,
-        weight: weight,
-        whiteRice: whiteRice,
-        broken: broken,
-        bran: bran,
-        husk: huskBags
+        weight: document.getElementById('receive-weight').value,
+        white_rice: document.getElementById('white-rice').value,
+        broken: document.getElementById('broken-rice').value,
+        bran: document.getElementById('bran-rice').value,
+        husk: document.getElementById('husk-bags').value,
+        receive_date: document.getElementById('receive-date').value
     };
 
-    receives.push(receive);
+    fetch('receives.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(res => {
+        alert(res.message);
+        loadReceives();
+        document.getElementById('receive-form').reset();
+    });
+}
 
-    // Update stock
-    stock.rice[typeId] = (stock.rice[typeId] || 0) + whiteRice;
-    stock.broken += broken;
-    stock.bran += bran;
-    stock.husk += huskBags;
-
-    document.getElementById('receive-form').reset();
-    setDefaultDates();
-    
-    updateReceiveHistory();
-    updateStockList();
-    updateDashboard();
-    updateReports();
-    saveData();
-    
-    alert('บันทึกการรับข้าวสำเร็จ!');
+function loadReceives() {
+    fetch('receives.php')
+        .then(res => res.json())
+        .then(data => {
+            receives = data;
+            updateReceiveHistory();
+        });
 }
 
        function updateReceiveHistory() {
@@ -704,64 +679,42 @@ function saveData() {
         }
 
         function addSale(e) {
-            e.preventDefault();
-            
-            const product = document.getElementById('sale-product').value;
-            const qty = parseFloat(document.getElementById('sale-quantity').value);
-            
-            // Check stock
-            let currentStock = 0;
-            if (product === 'rice') {
-                currentStock = Object.values(stock.rice).reduce((a, b) => a + b, 0);
-            } else {
-                currentStock = stock[product];
-            }
+    e.preventDefault();
 
-            if (qty > currentStock) {
-                let unit = product === 'husk' ? ' ถุง' : ' กก.';
-                alert('สต็อกไม่เพียงพอ! สต็อกคงเหลือ: ' + currentStock.toFixed(2) + unit);
-                return;
-            }
+    const product = document.getElementById('sale-product').value;
+    const quantity = parseFloat(document.getElementById('sale-quantity').value);
+    const price = parseFloat(document.getElementById('sale-price').value);
+    const date = document.getElementById('sale-date').value;
 
-            const sale = {
-                id: Date.now(),
-                date: document.getElementById('sale-date').value,
-                product: product,
-                productName: document.getElementById('sale-product').selectedOptions[0].text,
-                quantity: qty,
-                price: parseFloat(document.getElementById('sale-price').value),
-                total: parseFloat(document.getElementById('sale-total').value)
-            };
+    const total = quantity * price;
 
-            sales.push(sale);
-            
-            // Update stock
-            if (product === 'rice') {
-                // Deduct from first available rice type
-                let remaining = qty;
-                for (let typeId in stock.rice) {
-                    if (remaining <= 0) break;
-                    if (stock.rice[typeId] > 0) {
-                        const deduct = Math.min(stock.rice[typeId], remaining);
-                        stock.rice[typeId] -= deduct;
-                        remaining -= deduct;
-                    }
-                }
-            } else {
-                stock[product] -= qty;
-            }
+    fetch('sales.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            product,
+            quantity,
+            price,
+            total,
+            sale_date: date
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+        loadSales();
+        document.getElementById('sale-form').reset();
+    });
+}
 
-            document.getElementById('sales-form').reset();
-            setDefaultDates();
-            
+function loadSales() {
+    fetch('sales.php')
+        .then(res => res.json())
+        .then(data => {
+            sales = data;
             updateSalesHistory();
-            updateStockList();
-            updateDashboard();
-            updateReports();
-            saveData();
-            
-            alert('บันทึกการขายสำเร็จ!');
-        }
+        });
+}
 
         function updateSalesHistory() {
             const container = document.getElementById('sales-history');

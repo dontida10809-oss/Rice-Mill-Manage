@@ -13,5 +13,4 @@ try {
     die(json_encode(["error" => $e->getMessage()]));
 }
 
-header("Content-Type: application/json");
 ?>

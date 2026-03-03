@@ -1,52 +1,32 @@
 <?php
-require 'config.php';
+header("Content-Type: application/json");
+include "db.php";
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
 
     case 'GET':
-        $stmt = $pdo->query("SELECT * FROM sales ORDER BY id DESC");
-        echo json_encode($stmt->fetchAll());
+        $stmt = $pdo->query("SELECT * FROM sales ORDER BY sale_date DESC");
+        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
         break;
 
     case 'POST':
         $data = json_decode(file_get_contents("php://input"), true);
 
-        $total =
-            ($data['bran_kg'] * $data['price_bran']) +
-            ($data['broken_rice_kg'] * $data['price_broken']) +
-            ($data['husk_bags'] * $data['price_husk']);
-
         $stmt = $pdo->prepare("
-            INSERT INTO sales
-            (bran_kg, broken_rice_kg, husk_bags,
-             price_bran, price_broken, price_husk,
-             total)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO sales (product, quantity, price, total, sale_date)
+            VALUES (?, ?, ?, ?, ?)
         ");
 
         $stmt->execute([
-            $data['bran_kg'],
-            $data['broken_rice_kg'],
-            $data['husk_bags'],
-            $data['price_bran'],
-            $data['price_broken'],
-            $data['price_husk'],
-            $total
+            $data['product'],
+            $data['quantity'],
+            $data['price'],
+            $data['total'],
+            $data['sale_date']
         ]);
 
         echo json_encode(["message" => "บันทึกการขายสำเร็จ"]);
         break;
-
-    case 'DELETE':
-        parse_str($_SERVER['QUERY_STRING'], $query);
-        $id = $query['id'];
-
-        $stmt = $pdo->prepare("DELETE FROM sales WHERE id=?");
-        $stmt->execute([$id]);
-
-        echo json_encode(["message" => "ลบข้อมูลสำเร็จ"]);
-        break;
 }
-?>
