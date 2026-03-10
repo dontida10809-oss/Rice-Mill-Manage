@@ -477,6 +477,7 @@
         // Initialize
         function init() {
             loadData();
+            updateReceiveOptions();
             updateDashboard();
             updateRiceTypesList();
             updateReceiveHistory();
@@ -493,17 +494,23 @@
         }
 
         function loadData() {
-            // Load from memory (reset on page reload)
-            riceTypes = [];
-            receives = [];
-            sales = [];
-            stock = {
-                rice: {},
-                broken: 0,
-                bran: 0,
-                husk: 0
-            };
-        }
+            riceTypes = JSON.parse(localStorage.getItem("riceTypes")) || [];
+            receives = JSON.parse(localStorage.getItem("receives")) || [];
+            sales = JSON.parse(localStorage.getItem("sales")) || [];
+            stock = JSON.parse(localStorage.getItem("stock")) || {
+               rice: {},
+               broken: 0,
+               bran: 0,
+               husk: 0
+         };
+   }
+
+   function saveData() {
+    localStorage.setItem("riceTypes", JSON.stringify(riceTypes));
+    localStorage.setItem("receives", JSON.stringify(receives));
+    localStorage.setItem("sales", JSON.stringify(sales));
+    localStorage.setItem("stock", JSON.stringify(stock));
+}
 
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -527,6 +534,8 @@
 
             riceTypes.push(riceType);
             stock.rice[riceType.id] = 0;
+
+            saveData();
             
             document.getElementById('rice-type-form').reset();
             updateRiceTypesList();
@@ -560,6 +569,7 @@
                 updateRiceTypesList();
                 updateReceiveOptions();
                 updateDashboard();
+                saveData();
             }
         }
 
@@ -632,11 +642,14 @@
 
             receives.push(receive);
             
+            
             // Update stock
             stock.rice[typeId] = (stock.rice[typeId] || 0) + whiteRice;
             stock.broken += broken;
             stock.bran += bran;
             stock.husk += husk;
+
+            saveData();
 
             document.getElementById('receive-form').reset();
             document.getElementById('calculation-result').style.display = 'none';
@@ -672,14 +685,14 @@
                     </thead>
                     <tbody>
                         ${receives.slice().reverse().map(r => `
-                            <tr>
-                                <td>${new Date(r.date).toLocaleDateString('th-TH')}</td>
-                                <td>${r.farmer}</td>
-                                <td>${r.riceTypeName}</td>
-                                <td>${r.weight.toFixed(2)}</td>
-                                <td>${r.millShare.toFixed(2)}</td>
-                                <td>${r.whiteRice.toFixed(2)}</td>
-                            </tr>
+                        <tr>
+                             <td>${new Date(r.date).toLocaleDateString('th-TH')}</td>
+                             <td>${r.farmer}</td>
+                             <td>${r.riceTypeName}</td>
+                             <td>${Number(r.weight || 0).toFixed(2)}</td>
+                             <td>${Number(r.millShare || 0).toFixed(2)}</td>
+                             <td>${Number(r.whiteRice || 0).toFixed(2)}</td>
+                        </tr>
                         `).join('')}
                     </tbody>
                 </table>
@@ -723,6 +736,23 @@
             };
 
             sales.push(sale);
+
+            // Update stock
+            if (product === 'rice') {
+                let remaining = qty;
+                for (let typeId in stock.rice) {
+                    if (remaining <= 0) break;
+                    if (stock.rice[typeId] > 0) {
+                        const deduct = Math.min(stock.rice[typeId], remaining);
+                        stock.rice[typeId] -= deduct;
+                        remaining -= deduct;
+                    }
+              }
+            } else {
+                stock[product] -= qty;
+              }
+
+            saveData();
             
             // Update stock
             if (product === 'rice') {
@@ -775,9 +805,9 @@
                             <tr>
                                 <td>${new Date(s.date).toLocaleDateString('th-TH')}</td>
                                 <td>${s.productName}</td>
-                                <td>${s.quantity.toFixed(2)}</td>
-                                <td>${s.price.toFixed(2)}</td>
-                                <td><strong>${s.total.toFixed(2)}</strong></td>
+                                <td>${Number(s.quantity || 0).toFixed(2)}</td>
+                                <td>${Number(s.price || 0).toFixed(2)}</td>
+                                <td><strong>${Number(s.total || 0).toFixed(2)}</strong></td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -843,7 +873,7 @@
                         ${stockItems.map(item => `
                             <tr>
                                 <td><strong>${item.name}</strong></td>
-                                <td>${item.quantity.toFixed(2)}</td>
+                                <td>${Number(item.quantity || 0).toFixed(2)}</td>
                                 <td>${item.unit}</td>
                                 <td>
                                     <span class="badge badge-${item.status}">
@@ -922,9 +952,9 @@
                         ${reportData.map(item => `
                             <tr>
                                 <td><strong>${item.name}</strong></td>
-                                <td>${item.received.toFixed(2)}</td>
-                                <td>${item.produced.toFixed(2)}</td>
-                                <td>${item.stock.toFixed(2)}</td>
+                                <td>${Number(item.received || 0).toFixed(2)}</td>
+                                <td>${Number(item.produced || 0).toFixed(2)}</td>
+                                <td>${Number(item.stock || 0).toFixed(2)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -933,7 +963,7 @@
         }
 
         // Initialize on load
-        init();
+       document.addEventListener("DOMContentLoaded", init);
     </script>
 </body>
-</html>
+</html> 
